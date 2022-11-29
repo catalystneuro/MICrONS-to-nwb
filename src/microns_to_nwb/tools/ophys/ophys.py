@@ -27,15 +27,14 @@ def add_summary_images(field_key, nwb):
 def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
     ps = image_segmentation.create_plane_segmentation(
         name=f"PlaneSegmentation{field_key['field']}",
-        description='output from segmenting my favorite imaging plane',
+        description="output from segmenting my favorite imaging plane",
         imaging_plane=imaging_plane,
     )
     ps.add_column("mask_type", "type of ROI")
 
     image_height, image_width = (nda.Field & field_key).fetch1("px_height", "px_width")
 
-    mask_pixels, mask_weights, mask_ids, mask_types = (
-                nda.Segmentation * nda.MaskClassification & field_key).fetch(
+    mask_pixels, mask_weights, mask_ids, mask_types = (nda.Segmentation * nda.MaskClassification & field_key).fetch(
         "pixels", "weights", "mask_id", "mask_type", order_by="mask_id"
     )
 
@@ -53,14 +52,12 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
 
 
 def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
-    frame_times = (nda.FrameTimes & scan_key).fetch1('frame_times')
+    frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
 
-    data = np.vstack(
-        (nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")).T
+    data = np.vstack((nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")).T
 
     rt_region = plane_segmentation.create_roi_table_region(
-        region=list(range(data.shape[1])),
-        description=f"all rois in field {field_key['field']}"
+        region=list(range(data.shape[1])), description=f"all rois in field {field_key['field']}"
     )
 
     roi_response_series = RoiResponseSeries(
@@ -89,7 +86,7 @@ def add_ophys(scan_key, nwb):
         optical_channel = OpticalChannel(
             name="OpticalChannel",
             description="an optical channel",
-            emission_lambda=500.,
+            emission_lambda=500.0,
         )
         imaging_plane = nwb.create_imaging_plane(
             name=f"ImagingPlane{field_data['field']}",
@@ -97,14 +94,15 @@ def add_ophys(scan_key, nwb):
             imaging_rate=np.nan,
             description="no description",
             device=device,
-            excitation_lambda=920.,
+            excitation_lambda=920.0,
             indicator="GCaMP6",
             location="unknown",
-            grid_spacing=[field_data["um_width"] / field_data["px_width"] * 1e-6,
-                          field_data["um_height"] / field_data["px_height"]],
+            grid_spacing=[
+                field_data["um_width"] / field_data["px_width"] * 1e-6,
+                field_data["um_height"] / field_data["px_height"],
+            ],
             grid_spacing_unit="meters",
-            origin_coords=[field_data["field_x"], field_data["field_y"],
-                           field_data["field_z"]],
+            origin_coords=[field_data["field_x"], field_data["field_y"], field_data["field_z"]],
             origin_coords_unit="meters",
         )
 
