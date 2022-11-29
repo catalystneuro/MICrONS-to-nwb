@@ -16,8 +16,7 @@ def start_nwb(scan_key):
     nwb = NWBFile(
         identifier=str(uuid4()),
         session_description="unknown",
-        subject=Subject(subject_id="001", species="Mus musculus", age="P75D/P81D",
-                        sex="M"),
+        subject=Subject(subject_id="001", species="Mus musculus", age="P75D/P81D", sex="M"),
         session_start_time=datetime(1900, 1, 1),
         session_id=str(scan_key["session"]),
     )

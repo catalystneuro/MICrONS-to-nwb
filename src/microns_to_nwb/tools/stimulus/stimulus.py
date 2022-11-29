@@ -5,8 +5,8 @@ from pynwb.image import OpticalSeries
 
 
 def add_stimulus(scan_key, nwb):
-    timestamps = (nda.FrameTimes() & scan_key).fetch1('frame_times')  # timestamps of stimulus images
-    movie = (nda.Stimulus & scan_key).fetch1('movie')
+    timestamps = (nda.FrameTimes() & scan_key).fetch1("frame_times")  # timestamps of stimulus images
+    movie = (nda.Stimulus & scan_key).fetch1("movie")
     optical_series = OpticalSeries(
         name="visual stimulus",
         distance=np.nan,  # unknown

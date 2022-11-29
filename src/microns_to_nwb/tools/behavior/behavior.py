@@ -6,9 +6,9 @@ from pynwb.behavior import PupilTracking, SpatialSeries, EyeTracking
 
 
 def add_eye_tracking(scan_key, nwb):
-    pupil_min_r, pupil_maj_r, pupil_x, pupil_y, timestamps = (
-            nda.RawManualPupil() & scan_key
-    ).fetch1("pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times")
+    pupil_min_r, pupil_maj_r, pupil_x, pupil_y, timestamps = (nda.RawManualPupil() & scan_key).fetch1(
+        "pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times"
+    )
 
     pupil_min_r = TimeSeries(
         name="pupil_min_r",
@@ -44,9 +44,9 @@ def add_eye_tracking(scan_key, nwb):
 
 
 def add_treadmill(scan_key, nwb):
-    treadmill_velocity, treadmill_timestamps = (
-            nda.RawTreadmill & scan_key
-    ).fetch1("treadmill_velocity", "treadmill_timestamps")
+    treadmill_velocity, treadmill_timestamps = (nda.RawTreadmill & scan_key).fetch1(
+        "treadmill_velocity", "treadmill_timestamps"
+    )
 
     treadmill_velocity = TimeSeries(
         name="treadmill_velocity",
