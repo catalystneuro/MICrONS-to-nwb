@@ -53,7 +53,8 @@ def add_treadmill(scan_key, nwb):
         data=H5DataIO(treadmill_velocity, compression=True),
         timestamps=H5DataIO(treadmill_timestamps, compression=True),
         description="velocity of treadmill",
-        unit="n.a.",
+        unit="m/s",
+        conversion=0.01,
     )
 
     nwb.add_acquisition(treadmill_velocity)
