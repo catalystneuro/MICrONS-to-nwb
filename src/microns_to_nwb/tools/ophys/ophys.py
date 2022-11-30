@@ -103,7 +103,7 @@ def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
         data=H5DataIO(continuous_traces, compression=True),
         rois=roi_table_region,
         timestamps=H5DataIO(frame_times, compression=True),
-        units="n.a.",
+        unit="n.a.",
     )
 
     fluorescence = _get_fluorescence(nwb=nwb, fluorescence_name="Fluorescence")
