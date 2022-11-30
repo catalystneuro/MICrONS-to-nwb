@@ -1,6 +1,7 @@
 import numpy as np
 from hdmf.backends.hdf5 import H5DataIO
 from phase3 import nda, func
+from pynwb.base import Images
 from pynwb.image import GrayscaleImage
 from pynwb.ophys import (
     RoiResponseSeries,
@@ -15,13 +16,27 @@ from tools.nwb_helpers import check_module
 def add_summary_images(field_key, nwb):
     ophys = nwb.create_processing_module("ophys", "processed 2p data")
 
-    correlation, average = (nda.SummaryImages & field_key).fetch1("correlation", "average")
+    correlation_image_data, average_image_data = (nda.SummaryImages & field_key).fetch1("correlation", "average")
 
-    correlation_image = GrayscaleImage(correlation)
-    average_image = GrayscaleImage(average)
+    # The image dimensions are (height, width), for NWB it should be transposed to (width, height).
+    correlation_image_data = correlation_image_data.transpose(1, 0)
+    correlation_image = GrayscaleImage(
+        name="correlation",
+        data=correlation_image_data,
+    )
+    average_image_data = average_image_data.transpose(1, 0)
+    average_image = GrayscaleImage(
+        name="average",
+        data=average_image_data,
+    )
 
-    ophys.add(correlation_image)
-    ophys.add(average_image)
+    # Add images to Images container
+    segmentation_images = Images(
+        name=f"SegmentationImages{field_key['field']}",
+        images=[correlation_image, average_image],
+        description=f"Correlation and average images for field {field_key['field']}.",
+    )
+    ophys.add(segmentation_images)
 
 
 def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
@@ -30,7 +45,7 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
         description="output from segmenting my favorite imaging plane",
         imaging_plane=imaging_plane,
     )
-    ps.add_column("mask_type", "type of ROI")
+    plane_segmentation.add_column("mask_type", "type of ROI")
 
     image_height, image_width = (nda.Field & field_key).fetch1("px_height", "px_width")
 
@@ -42,13 +57,13 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
     masks = func.reshape_masks(mask_pixels, mask_weights, image_height, image_width)
 
     for image_mask, mask_id, mask_type in zip(masks, mask_ids, mask_types):
-        ps.add_roi(
+        plane_segmentation.add_roi(
             image_mask=image_mask,
             id=mask_id,
             mask_type=mask_type,
         )
 
-    return ps
+    return plane_segmentation
 
 
 def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
