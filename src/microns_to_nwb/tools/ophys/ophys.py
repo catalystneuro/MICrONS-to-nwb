@@ -103,6 +103,11 @@ def add_ophys(scan_key, nwb):
             description="an optical channel",
             emission_lambda=500.0,
         )
+        field_x_in_meters = field_data["field_x"] / 1e6
+        field_y_in_meters = field_data["field_y"] / 1e6
+        field_z_in_meters = field_data["field_z"] / 1e6
+        field_width_in_meters = field_data["um_width"] / 1e6
+        field_height_in_meters = field_data["um_height"] / 1e6
         imaging_plane = nwb.create_imaging_plane(
             name=f"ImagingPlane{field_data['field']}",
             optical_channel=optical_channel,
@@ -113,11 +118,11 @@ def add_ophys(scan_key, nwb):
             indicator="GCaMP6",
             location="unknown",
             grid_spacing=[
-                field_data["um_width"] / field_data["px_width"] * 1e-6,
-                field_data["um_height"] / field_data["px_height"],
+                field_width_in_meters / field_data["px_width"],
+                field_height_in_meters / field_data["px_height"],
             ],
             grid_spacing_unit="meters",
-            origin_coords=[field_data["field_x"], field_data["field_y"], field_data["field_z"]],
+            origin_coords=[field_x_in_meters, field_y_in_meters, field_z_in_meters],
             origin_coords_unit="meters",
         )
 
