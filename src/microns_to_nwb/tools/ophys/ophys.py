@@ -40,28 +40,37 @@ def add_summary_images(field_key, nwb):
 
 
 def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
-    plane_segmentation = image_segmentation.create_plane_segmentation(
-        name=f"PlaneSegmentation{field_key['field']}",
-        description="output from segmenting my favorite imaging plane",
-        imaging_plane=imaging_plane,
-    )
-    plane_segmentation.add_column("mask_type", "type of ROI")
-
     image_height, image_width = (nda.Field & field_key).fetch1("px_height", "px_width")
-
     mask_pixels, mask_weights, mask_ids, mask_types = (nda.Segmentation * nda.MaskClassification & field_key).fetch(
         "pixels", "weights", "mask_id", "mask_type", order_by="mask_id"
     )
 
+    plane_segmentation = image_segmentation.create_plane_segmentation(
+        name=f"PlaneSegmentation{field_key['field']}",
+        description="output from segmenting my favorite imaging plane",
+        imaging_plane=imaging_plane,
+        id=mask_ids,
+    )
+
     # Reshape masks
     masks = func.reshape_masks(mask_pixels, mask_weights, image_height, image_width)
+    # The masks dimensions are (width, height, number of frames), for NWB it should be
+    # transposed to (number of frames, width, height)
+    masks = masks.transpose(2, 0, 1)
 
-    for image_mask, mask_id, mask_type in zip(masks, mask_ids, mask_types):
-        plane_segmentation.add_roi(
-            image_mask=image_mask,
-            id=mask_id,
-            mask_type=mask_type,
-        )
+    # Add image masks
+    plane_segmentation.add_column(
+        name="image_mask",
+        description="The image masks for each ROI.",
+        data=H5DataIO(masks, compression=True),
+    )
+
+    # Add type of ROIs
+    plane_segmentation.add_column(
+        name="mask_type",
+        description="The classification of mask as soma or artifact.",
+        data=mask_types.astype(str),
+    )
 
     return plane_segmentation
 
