@@ -75,26 +75,39 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
     return plane_segmentation
 
 
+def _get_fluorescence(nwb, fluorescence_name):
+    ophys = check_module(nwb, "ophys")
+
+    if fluorescence_name in ophys.data_interfaces:
+        return ophys.get(fluorescence_name)
+
+    fluorescence = Fluorescence(name=fluorescence_name)
+    ophys.add(fluorescence)
+
+    return fluorescence
+
+
 def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
     frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
 
-    data = np.vstack((nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")).T
+    traces_for_each_mask = (nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")
+    continuous_traces = np.vstack(traces_for_each_mask).T
 
-    rt_region = plane_segmentation.create_roi_table_region(
-        region=list(range(data.shape[1])), description=f"all rois in field {field_key['field']}"
+    roi_table_region = plane_segmentation.create_roi_table_region(
+        region=list(range(continuous_traces.shape[1])), description=f"all rois in field {field_key['field']}"
     )
 
     roi_response_series = RoiResponseSeries(
         name=f"RioResponseSeries{field_key['field']}",
-        description=f"traces for field {field_key['field']}",
-        data=H5DataIO(data, compression=True),
-        rois=rt_region,
+        description=f"The fluorescence traces for field {field_key['field']}",
+        data=H5DataIO(continuous_traces, compression=True),
+        rois=roi_table_region,
         timestamps=H5DataIO(frame_times, compression=True),
-        units="n/a",
+        units="n.a.",
     )
 
-    fluorescence = Fluorescence()
-    fluorescence.add(roi_response_series)
+    fluorescence = _get_fluorescence(nwb=nwb, fluorescence_name="Fluorescence")
+    fluorescence.add_roi_response_series(roi_response_series)
 
 
 def add_ophys(scan_key, nwb):
