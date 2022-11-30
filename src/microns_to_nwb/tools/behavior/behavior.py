@@ -6,39 +6,39 @@ from pynwb.behavior import PupilTracking, SpatialSeries, EyeTracking
 
 
 def add_eye_tracking(scan_key, nwb):
-    pupil_min_r, pupil_maj_r, pupil_x, pupil_y, timestamps = (nda.RawManualPupil() & scan_key).fetch1(
+    pupil_minor_radius_data, pupil_major_radius_data, pupil_x, pupil_y, timestamps = (nda.RawManualPupil() & scan_key).fetch1(
         "pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times"
     )
 
-    pupil_min_r = TimeSeries(
-        name="pupil_min_r",
-        description="minor axis of pupil tracking ellipse",
-        data=H5DataIO(pupil_min_r, compression=True),
+    pupil_minor_radius = TimeSeries(
+        name="pupil_minor_radius",
+        description="Minor radius extracted from the pupil tracking ellipse.",
+        data=H5DataIO(pupil_minor_radius_data, compression=True),
         timestamps=H5DataIO(timestamps, compression=True),
         unit="n.a.",
     )
 
-    pupil_maj_r = TimeSeries(
-        name="pupil_maj_r",
-        description="Major axis of pupil tracking ellipse.",
-        data=H5DataIO(pupil_maj_r, compression=True),
-        timestamps=pupil_min_r,
+    pupil_major_radius = TimeSeries(
+        name="pupil_major_radius",
+        description="Major radius extracted from the pupil tracking ellipse.",
+        data=H5DataIO(pupil_major_radius_data, compression=True),
+        timestamps=pupil_minor_radius,
         unit="n.a.",
     )
 
-    pupil_tracking = PupilTracking([pupil_min_r, pupil_maj_r])
+    pupil_tracking = PupilTracking(time_series=[pupil_minor_radius, pupil_major_radius])
     nwb.add_acquisition(pupil_tracking)
 
-    pupil_xy = SpatialSeries(
+    eye_position = SpatialSeries(
         name="eye_position",
-        description="x,y position of eye",
+        description="The x,y position of the pupil.",
         data=H5DataIO(np.c_[pupil_x, pupil_y], compression=True),
-        timestamps=pupil_min_r,
+        timestamps=pupil_minor_radius,
         unit="n.a.",
         reference_frame="unknown",
     )
 
-    eye_position_tracking = EyeTracking(pupil_xy)
+    eye_position_tracking = EyeTracking(eye_position)
 
     nwb.add_acquisition(eye_position_tracking)
 
