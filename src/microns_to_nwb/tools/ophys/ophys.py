@@ -14,7 +14,7 @@ from tools.nwb_helpers import check_module
 
 
 def add_summary_images(field_key, nwb):
-    ophys = nwb.create_processing_module("ophys", "processed 2p data")
+    ophys = check_module(nwb, "ophys")
 
     correlation_image_data, average_image_data = (nda.SummaryImages & field_key).fetch1("correlation", "average")
 
@@ -93,7 +93,7 @@ def add_ophys(scan_key, nwb):
         name="Microscope",
         description="two-photon random access mesoscope",
     )
-    ophys = check_module(nwb, "ophys")
+    ophys = nwb.create_processing_module("ophys", "processed 2p data")
     image_segmentation = ImageSegmentation()
     ophys.add(image_segmentation)
     all_field_data = (nda.Field & scan_key).fetch(as_dict=True)
