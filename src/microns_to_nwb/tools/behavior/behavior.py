@@ -20,7 +20,7 @@ def add_eye_tracking(scan_key, nwb):
 
     pupil_maj_r = TimeSeries(
         name="pupil_maj_r",
-        description="jajor axis of pupil tracking ellipse",
+        description="Major axis of pupil tracking ellipse.",
         data=H5DataIO(pupil_maj_r, compression=True),
         timestamps=pupil_min_r,
         unit="n.a.",

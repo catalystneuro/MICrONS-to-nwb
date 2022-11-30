@@ -25,7 +25,7 @@ def add_summary_images(field_key, nwb):
 
 
 def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
-    ps = image_segmentation.create_plane_segmentation(
+    plane_segmentation = image_segmentation.create_plane_segmentation(
         name=f"PlaneSegmentation{field_key['field']}",
         description="output from segmenting my favorite imaging plane",
         imaging_plane=imaging_plane,
