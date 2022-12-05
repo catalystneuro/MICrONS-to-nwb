@@ -15,7 +15,7 @@ def add_eye_tracking(scan_key, nwb):
     pupil_minor_radius = TimeSeries(
         name="pupil_minor_radius",
         description="Minor radius extracted from the pupil tracking ellipse."
-                    "The values are estimated in the relative pixel units.",
+        "The values are estimated in the relative pixel units.",
         data=H5DataIO(pupil_minor_radius_data[good_indices], compression=True),
         timestamps=H5DataIO(timestamps[good_indices], compression=True),
         unit="px",
@@ -24,7 +24,7 @@ def add_eye_tracking(scan_key, nwb):
     pupil_major_radius = TimeSeries(
         name="pupil_major_radius",
         description="Major radius extracted from the pupil tracking ellipse."
-                    "The values are estimated in the relative pixel units.",
+        "The values are estimated in the relative pixel units.",
         data=H5DataIO(pupil_major_radius_data[good_indices], compression=True),
         timestamps=pupil_minor_radius,
         unit="px",
@@ -38,8 +38,7 @@ def add_eye_tracking(scan_key, nwb):
 
     eye_position = SpatialSeries(
         name="eye_position",
-        description="The x,y position of the pupil."
-                    "The values are estimated in the relative pixel units.",
+        description="The x,y position of the pupil." "The values are estimated in the relative pixel units.",
         data=H5DataIO(np.c_[pupil_x_position, pupil_y_position], compression=True),
         timestamps=pupil_minor_radius,
         unit="px",
