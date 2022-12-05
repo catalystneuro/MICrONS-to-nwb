@@ -10,31 +10,39 @@ def add_eye_tracking(scan_key, nwb):
         nda.RawManualPupil() & scan_key
     ).fetch1("pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times")
 
+    good_indices = _get_indices(pupil_minor_radius_data, timestamps)
+
     pupil_minor_radius = TimeSeries(
         name="pupil_minor_radius",
-        description="Minor radius extracted from the pupil tracking ellipse.",
-        data=H5DataIO(pupil_minor_radius_data, compression=True),
-        timestamps=H5DataIO(timestamps, compression=True),
-        unit="n.a.",
+        description="Minor radius extracted from the pupil tracking ellipse."
+                    "The values are estimated in the relative pixel units.",
+        data=H5DataIO(pupil_minor_radius_data[good_indices], compression=True),
+        timestamps=H5DataIO(timestamps[good_indices], compression=True),
+        unit="px",
     )
 
     pupil_major_radius = TimeSeries(
         name="pupil_major_radius",
-        description="Major radius extracted from the pupil tracking ellipse.",
-        data=H5DataIO(pupil_major_radius_data, compression=True),
+        description="Major radius extracted from the pupil tracking ellipse."
+                    "The values are estimated in the relative pixel units.",
+        data=H5DataIO(pupil_major_radius_data[good_indices], compression=True),
         timestamps=pupil_minor_radius,
-        unit="n.a.",
+        unit="px",
     )
 
     pupil_tracking = PupilTracking(time_series=[pupil_minor_radius, pupil_major_radius])
     nwb.add_acquisition(pupil_tracking)
 
+    pupil_x_position = np.array(pupil_x)[good_indices]
+    pupil_y_position = np.array(pupil_y)[good_indices]
+
     eye_position = SpatialSeries(
         name="eye_position",
-        description="The x,y position of the pupil.",
-        data=H5DataIO(np.c_[pupil_x, pupil_y], compression=True),
+        description="The x,y position of the pupil."
+                    "The values are estimated in the relative pixel units.",
+        data=H5DataIO(np.c_[pupil_x_position, pupil_y_position], compression=True),
         timestamps=pupil_minor_radius,
-        unit="n.a.",
+        unit="px",
         reference_frame="unknown",
     )
 
@@ -48,13 +56,26 @@ def add_treadmill(scan_key, nwb):
         "treadmill_velocity", "treadmill_timestamps"
     )
 
-    treadmill_velocity = TimeSeries(
+    good_indices = _get_indices(data=treadmill_velocity, timestamps=treadmill_timestamps)
+
+    treadmill_velocity_raw = TimeSeries(
         name="treadmill_velocity",
-        data=H5DataIO(treadmill_velocity, compression=True),
-        timestamps=H5DataIO(treadmill_timestamps, compression=True),
-        description="velocity of treadmill",
+        data=H5DataIO(treadmill_velocity[good_indices], compression=True),
+        timestamps=H5DataIO(treadmill_timestamps[good_indices], compression=True),
+        description="Cylindrical treadmill rostral-caudal position extracted at ~60-100 Hz and converted into velocity.",
         unit="m/s",
         conversion=0.01,
     )
 
-    nwb.add_acquisition(treadmill_velocity)
+    nwb.add_acquisition(treadmill_velocity_raw)
+
+
+def _get_indices(data, timestamps):
+    # index of first non-missing value
+    first_value_index = np.isnan(np.array(data)).argmin(0)
+
+    # indices of positive timestamps
+    non_negative_indices = np.where(timestamps >= 0)[0]
+
+    good_indices = non_negative_indices[non_negative_indices >= first_value_index]
+    return good_indices
