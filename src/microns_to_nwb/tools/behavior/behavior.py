@@ -10,7 +10,7 @@ def add_eye_tracking(scan_key, nwb):
         nda.RawManualPupil() & scan_key
     ).fetch1("pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times")
 
-    good_indices = _get_indices(pupil_minor_radius_data, timestamps)
+    good_indices = _crop_indices(pupil_minor_radius_data)
 
     pupil_minor_radius = TimeSeries(
         name="pupil_minor_radius",
@@ -55,7 +55,7 @@ def add_treadmill(scan_key, nwb):
         "treadmill_velocity", "treadmill_timestamps"
     )
 
-    good_indices = _get_indices(data=treadmill_velocity, timestamps=treadmill_timestamps)
+    good_indices = _crop_indices(behavior_data=treadmill_velocity)
 
     treadmill_velocity_raw = TimeSeries(
         name="treadmill_velocity",
@@ -69,12 +69,17 @@ def add_treadmill(scan_key, nwb):
     nwb.add_acquisition(treadmill_velocity_raw)
 
 
-def _get_indices(data, timestamps):
-    # index of first non-missing value
-    first_value_index = np.isnan(np.array(data)).argmin(0)
+def _crop_indices(behavior_data):
+    data_array = np.array(behavior_data)
+    last_value_index = data_array.shape[0]
 
-    # indices of positive timestamps
-    non_negative_indices = np.where(timestamps >= 0)[0]
+    # find the index of first non-missing value
+    first_value_index = np.isnan(data_array).argmin()
 
-    good_indices = non_negative_indices[non_negative_indices >= first_value_index]
-    return good_indices
+    if np.isnan(data_array[-1]):
+        # find the index of the last non-missing value
+        last_value_index = data_array.shape[0] - np.isnan(data_array[::-1]).argmin()
+
+    indices = np.arange(first_value_index, last_value_index)
+    return indices
+
