@@ -15,7 +15,7 @@ def add_stimulus(scan_key, nwb):
         name="visual stimulus",
         description="The visual stimulus is composed of natural movies ~30 fps in grayscale format.",
         distance=np.nan,  # unknown
-        field_of_view=np.nan,
+        field_of_view=[np.nan, np.nan],
         orientation="0 is up",
         data=H5DataIO(movie_transposed, compression=True),
         timestamps=H5DataIO(timestamps, compression=True),
