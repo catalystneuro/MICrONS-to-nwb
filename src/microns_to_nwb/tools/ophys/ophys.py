@@ -134,7 +134,7 @@ def add_ophys(scan_key, nwb):
             name=f"ImagingPlane{field_data['field']}",
             optical_channel=optical_channel,
             imaging_rate=np.nan,
-            description="no description",
+            description=f"The imaging plane for field {field_data['field']} at {field_z_in_meters} meters depth.",
             device=device,
             excitation_lambda=920.0,
             indicator="GCaMP6",
