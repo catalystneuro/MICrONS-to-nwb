@@ -82,4 +82,3 @@ def _crop_indices(behavior_data):
 
     indices = np.arange(first_value_index, last_value_index)
     return indices
-
