@@ -87,8 +87,7 @@ def _get_fluorescence(nwb, fluorescence_name):
     return fluorescence
 
 
-def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
-    frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
+def add_roi_response_series(field_key, nwb, plane_segmentation, timestamps):
 
     traces_for_each_mask = (nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")
     continuous_traces = np.vstack(traces_for_each_mask).T
@@ -102,7 +101,7 @@ def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
         description=f"The fluorescence traces for field {field_key['field']}",
         data=H5DataIO(continuous_traces, compression=True),
         rois=roi_table_region,
-        timestamps=H5DataIO(frame_times, compression=True),
+        timestamps=H5DataIO(timestamps, compression=True),
         unit="n.a.",
     )
 
@@ -110,7 +109,7 @@ def add_roi_response_series(scan_key, field_key, nwb, plane_segmentation):
     fluorescence.add_roi_response_series(roi_response_series)
 
 
-def add_ophys(scan_key, nwb):
+def add_ophys(scan_key, nwb, timestamps):
     device = nwb.create_device(
         name="Microscope",
         description="two-photon random access mesoscope",
@@ -154,5 +153,5 @@ def add_ophys(scan_key, nwb):
         field_key = {**scan_key, **dict(field=field_data["field"])}
 
         plane_segmentation = add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation)
-        add_roi_response_series(scan_key, field_key, nwb, plane_segmentation)
+        add_roi_response_series(field_key, nwb, plane_segmentation, timestamps)
         add_summary_images(field_key, nwb)

@@ -5,10 +5,10 @@ from pynwb import TimeSeries
 from pynwb.behavior import PupilTracking, SpatialSeries, EyeTracking
 
 
-def add_eye_tracking(scan_key, nwb):
-    pupil_minor_radius_data, pupil_major_radius_data, pupil_x, pupil_y, timestamps = (
-        nda.RawManualPupil() & scan_key
-    ).fetch1("pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y", "pupil_times")
+def add_eye_tracking(scan_key, nwb, timestamps):
+    pupil_minor_radius_data, pupil_major_radius_data, pupil_x, pupil_y = (
+        nda.RawManualPupil & scan_key
+    ).fetch1("pupil_min_r", "pupil_maj_r", "pupil_x", "pupil_y")
 
     good_indices = _crop_indices(pupil_minor_radius_data)
 
@@ -50,17 +50,15 @@ def add_eye_tracking(scan_key, nwb):
     nwb.add_acquisition(eye_position_tracking)
 
 
-def add_treadmill(scan_key, nwb):
-    treadmill_velocity, treadmill_timestamps = (nda.RawTreadmill & scan_key).fetch1(
-        "treadmill_velocity", "treadmill_timestamps"
-    )
+def add_treadmill(scan_key, nwb, timestamps):
+    treadmill_velocity = (nda.RawTreadmill & scan_key).fetch1("treadmill_velocity",)
 
     good_indices = _crop_indices(behavior_data=treadmill_velocity)
 
     treadmill_velocity_raw = TimeSeries(
         name="treadmill_velocity",
         data=H5DataIO(treadmill_velocity[good_indices], compression=True),
-        timestamps=H5DataIO(treadmill_timestamps[good_indices], compression=True),
+        timestamps=H5DataIO(timestamps[good_indices], compression=True),
         description="Cylindrical treadmill rostral-caudal position extracted at ~60-100 Hz and converted into velocity.",
         unit="m/s",
         conversion=0.01,
@@ -82,3 +80,9 @@ def _crop_indices(behavior_data):
 
     indices = np.arange(first_value_index, last_value_index)
     return indices
+
+
+def find_earliest_timestamp(behavior_timestamps_arrays):
+    return min(
+        [timestamps[np.isnan(timestamps).argmin()] for timestamps in behavior_timestamps_arrays],
+    )
