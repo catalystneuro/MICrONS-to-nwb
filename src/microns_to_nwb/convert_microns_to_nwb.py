@@ -20,8 +20,10 @@ def build_nwb(scan_key):
 
     first_timestamp_in_behavior = find_earliest_timestamp([pupil_timestamps, treadmill_timestamps])
     if first_timestamp_in_behavior < 0:
-        warn("Writing behavior data to NWB with negative timestamps is not recommended,"
-             f"times are shifted to the earliest behavioral timestamp by {abs(first_timestamp_in_behavior)} seconds.")
+        warn(
+            "Writing behavior data to NWB with negative timestamps is not recommended,"
+            f"times are shifted to the earliest behavioral timestamp by {abs(first_timestamp_in_behavior)} seconds."
+        )
         pupil_timestamps = pupil_timestamps + abs(first_timestamp_in_behavior)
         treadmill_timestamps = treadmill_timestamps + abs(first_timestamp_in_behavior)
         frame_times = frame_times + abs(first_timestamp_in_behavior)
