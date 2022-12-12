@@ -17,7 +17,9 @@ def build_nwb(scan_key):
     pupil_timestamps = (nda.RawManualPupil & scan_key).fetch1("pupil_times")
     treadmill_timestamps = (nda.RawTreadmill & scan_key).fetch1("treadmill_timestamps")
     frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
-    trial_start_times, trial_stop_times = (nda.Trial & scan_key).fetch("start_frame_time", "end_frame_time", order_by="trial_idx")
+    trial_start_times, trial_stop_times = (nda.Trial & scan_key).fetch(
+        "start_frame_time", "end_frame_time", order_by="trial_idx"
+    )
 
     first_timestamp_in_behavior = find_earliest_timestamp([pupil_timestamps, treadmill_timestamps])
     if first_timestamp_in_behavior < 0:
