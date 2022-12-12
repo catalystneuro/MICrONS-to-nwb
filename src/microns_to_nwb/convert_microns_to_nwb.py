@@ -17,6 +17,7 @@ def build_nwb(scan_key):
     pupil_timestamps = (nda.RawManualPupil & scan_key).fetch1("pupil_times")
     treadmill_timestamps = (nda.RawTreadmill & scan_key).fetch1("treadmill_timestamps")
     frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
+    trial_start_times, trial_stop_times = (nda.Trial & scan_key).fetch("start_frame_time", "end_frame_time", order_by="trial_idx")
 
     first_timestamp_in_behavior = find_earliest_timestamp([pupil_timestamps, treadmill_timestamps])
     if first_timestamp_in_behavior < 0:
@@ -27,10 +28,12 @@ def build_nwb(scan_key):
         pupil_timestamps = pupil_timestamps + abs(first_timestamp_in_behavior)
         treadmill_timestamps = treadmill_timestamps + abs(first_timestamp_in_behavior)
         frame_times = frame_times + abs(first_timestamp_in_behavior)
+        trial_start_times = trial_start_times + abs(first_timestamp_in_behavior)
+        trial_stop_times = trial_stop_times + abs(first_timestamp_in_behavior)
 
     add_eye_tracking(scan_key, nwb, timestamps=pupil_timestamps)
     add_treadmill(scan_key, nwb, timestamps=treadmill_timestamps)
-    add_trials(scan_key, nwb)
+    add_trials(scan_key, nwb, timestamps=(trial_start_times, trial_stop_times))
     add_ophys(scan_key, nwb, timestamps=frame_times)
 
     return nwb
