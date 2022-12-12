@@ -11,7 +11,6 @@ from tools.stimulus import add_stimulus
 
 def build_nwb(scan_key):
     nwb = start_nwb(scan_key)
-    add_stimulus(scan_key, nwb)
 
     # Shifting times to earliest provided behavioral timestamp when necessary
     pupil_timestamps = (nda.RawManualPupil & scan_key).fetch1("pupil_times")
@@ -31,9 +30,15 @@ def build_nwb(scan_key):
         trial_start_times = trial_start_times + abs(first_timestamp_in_behavior)
         trial_stop_times = trial_stop_times + abs(first_timestamp_in_behavior)
 
+    # The stimulus images were synchronized with field 1 frame times
+    add_stimulus(scan_key, nwb, timestamps=frame_times)
+    # Add eye position and pupil radius
     add_eye_tracking(scan_key, nwb, timestamps=pupil_timestamps)
+    # Add the velocity of the treadmill
     add_treadmill(scan_key, nwb, timestamps=treadmill_timestamps)
+    # Add trials
     add_trials(scan_key, nwb, timestamps=(trial_start_times, trial_stop_times))
+    # Add fluorescence traces, image masks and summary images to NWB
     add_ophys(scan_key, nwb, timestamps=frame_times)
 
     return nwb

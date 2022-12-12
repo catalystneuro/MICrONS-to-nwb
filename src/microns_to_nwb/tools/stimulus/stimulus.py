@@ -4,9 +4,7 @@ from phase3 import nda
 from pynwb.image import OpticalSeries
 
 
-def add_stimulus(scan_key, nwb):
-    # The stimulus images were synchronized with field 1 frame times
-    timestamps = (nda.FrameTimes() & scan_key).fetch1("frame_times")
+def add_stimulus(scan_key, nwb, timestamps):
     movie = (nda.Stimulus & scan_key).fetch1("movie")
     # The movie dimensions are (height, width, number of frames), for NWB it should be
     # transposed to (number of frames, width, height)
