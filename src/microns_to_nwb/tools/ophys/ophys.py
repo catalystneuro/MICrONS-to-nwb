@@ -118,9 +118,6 @@ def add_ophys(scan_key, nwb, timestamps):
     image_segmentation = ImageSegmentation()
     ophys.add(image_segmentation)
     all_field_data = (nda.Field & scan_key).fetch(as_dict=True)
-    brain_areas_per_unit = (nda.AreaMembership & scan_key).fetch("brain_area")
-    brain_areas = list(set(brain_areas_per_unit))
-    brain_areas = ",".join(brain_areas)
     for field_data in all_field_data:
         optical_channel = OpticalChannel(
             name="OpticalChannel",
@@ -140,7 +137,7 @@ def add_ophys(scan_key, nwb, timestamps):
             device=device,
             excitation_lambda=920.0,
             indicator="GCaMP6",
-            location=brain_areas,
+            location="VISp,VISrl,VISlm,VISal",
             grid_spacing=[
                 field_width_in_meters / field_data["px_width"],
                 field_height_in_meters / field_data["px_height"],
