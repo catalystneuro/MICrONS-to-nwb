@@ -2,43 +2,17 @@ from phase3 import nda
 from pynwb.epoch import TimeIntervals
 
 
-def add_trials(scan_key, nwb, timestamps):
-    stimulus_types, condition_hashes, trial_idxs = (nda.Trial & scan_key).fetch(
-        "type", "condition_hash", "trial_idx", order_by="trial_idx"
-    )
+def add_trials(scan_key, nwb, time_offset):
 
-    trippy_condition_hashes = []
-    trippy_timestamps = []
-
-    clip_condition_hashes = []
-    clip_timestamps = []
-
-    monet2_condition_hashes = []
-    monet2_timestamps = []
-
-    for stimulus_type, start_time, stop_time, condition_hash, trial_idx in zip(
-        stimulus_types, timestamps[0], timestamps[1], condition_hashes, trial_idxs
-    ):
-        if "Trippy" in stimulus_type:
-            trippy_condition_hashes.append(condition_hash)
-            trippy_timestamps.append((start_time, stop_time))
-
-        elif "Clip" in stimulus_type:
-            clip_condition_hashes.append(condition_hash)
-            clip_timestamps.append((start_time, stop_time))
-
-        elif "Monet2" in stimulus_type:
-            monet2_condition_hashes.append(condition_hash)
-            monet2_timestamps.append((start_time, stop_time))
-
-    add_trials_from_trippy(nwb, condition_hashes=trippy_condition_hashes, timestamps=trippy_timestamps)
-    add_trials_from_clip(nwb, condition_hashes=clip_condition_hashes, timestamps=clip_timestamps)
-    add_trials_from_monet2(nwb, condition_hashes=monet2_condition_hashes, timestamps=monet2_timestamps)
+    # Add trials from "Trippy" stimulus type
+    add_trials_from_trippy(nwb, scan_key=scan_key, time_offset=time_offset)
+    # Add trials from "Clip" stimulus type
+    add_trials_from_clip(nwb, scan_key=scan_key, time_offset=time_offset)
+    # Add trials from "Monet2" stimulus type
+    add_trials_from_monet2(nwb, scan_key=scan_key, time_offset=time_offset)
 
 
-def add_trials_from_trippy(nwb, condition_hashes, timestamps):
-    if not condition_hashes:
-        return
+def add_trials_from_trippy(nwb, scan_key, time_offset):
 
     trippy_table = TimeIntervals(
         name="Trippy",
@@ -46,6 +20,7 @@ def add_trials_from_trippy(nwb, condition_hashes, timestamps):
     )
 
     trippy_columns = [
+        ("stimulus_type", "The type of stimulus."),
         ("condition_hash", "The hash for the stimulus condition."),
         ("rng_seed", "Random number generate seed for the stimulus movie."),
         ("texture_height", "Texture height in pixels."),
@@ -64,55 +39,50 @@ def add_trials_from_trippy(nwb, condition_hashes, timestamps):
     for column_name, column_description in trippy_columns:
         trippy_table.add_column(column_name, column_description)
 
-    for condition_hash, times in zip(condition_hashes, timestamps):
-        hash_key = {"condition_hash": condition_hash}
+    all_trial_data = ((nda.Trial & scan_key) * nda.Trippy).fetch(
+        "trial_idx",
+        "start_frame_time",
+        "end_frame_time",
+        "condition_hash",
+        "type",
+        "rng_seed",
+        "tex_ydim",
+        "tex_xdim",
+        "duration",
+        "xnodes",
+        "ynodes",
+        "up_factor",
+        "temp_freq",
+        "temp_kernel_length",
+        "spatial_freq",
+        order_by="trial_idx",
+        as_dict=True,
+    )
 
-        (
-            rng_seed,
-            texture_height,
-            texture_width,
-            duration,
-            xnodes,
-            ynodes,
-            up_factor,
-            temp_freq,
-            temp_kernel_length,
-            spatial_freq,
-        ) = (nda.Trippy() & hash_key).fetch1(
-            "rng_seed",
-            "tex_ydim",
-            "tex_xdim",
-            "duration",
-            "xnodes",
-            "ynodes",
-            "up_factor",
-            "temp_freq",
-            "temp_kernel_length",
-            "spatial_freq",
-        )
+    for trial_data in all_trial_data:
 
         trippy_table.add_interval(
-            condition_hash=condition_hash,
-            start_time=times[0],
-            stop_time=times[1],
-            rng_seed=rng_seed,
-            texture_height=texture_height,
-            texture_width=texture_width,
-            duration=duration,
-            xnodes=xnodes,
-            ynodes=ynodes,
-            up_factor=up_factor,
-            temp_freq=temp_freq,
-            temp_kernel_length=temp_kernel_length,
-            spatial_freq=spatial_freq,
+            id=trial_data["trial_idx"],
+            start_time=trial_data["start_frame_time"] + time_offset,
+            stop_time=trial_data["end_frame_time"] + time_offset,
+            condition_hash=trial_data["condition_hash"],
+            stimulus_type=trial_data["type"],
+            rng_seed=trial_data["rng_seed"],
+            texture_height=trial_data["tex_ydim"],
+            texture_width=trial_data["tex_xdim"],
+            duration=trial_data["duration"],
+            xnodes=trial_data["xnodes"],
+            ynodes=trial_data["ynodes"],
+            up_factor=trial_data["up_factor"],
+            temp_freq=trial_data["temp_freq"],
+            temp_kernel_length=trial_data["temp_kernel_length"],
+            spatial_freq=trial_data["spatial_freq"],
         )
 
     nwb.add_time_intervals(trippy_table)
 
 
-def add_trials_from_clip(nwb, condition_hashes, timestamps):
-    if not condition_hashes:
-        return
+def add_trials_from_clip(nwb, scan_key, time_offset):
 
     clip_table = TimeIntervals(
         name="Clip",
@@ -120,37 +90,45 @@ def add_trials_from_clip(nwb, condition_hashes, timestamps):
     )
 
     clip_columns = [
+        ("stimulus_type", "The type of stimulus."),
         ("condition_hash", "The hash for the stimulus condition."),
         ("movie_name", "The full clip source."),
         ("short_movie_name", "The type of the clip (cinematic, sports1m, rendered)."),
         ("duration", "The clip duration in seconds."),
     ]
-
     for column_name, column_description in clip_columns:
         clip_table.add_column(column_name, column_description)
 
-    for condition_hash, times in zip(condition_hashes, timestamps):
-        hash_key = {"condition_hash": condition_hash}
+    all_trial_data = ((nda.Trial & scan_key) * nda.Clip).fetch(
+        "trial_idx",
+        "start_frame_time",
+        "end_frame_time",
+        "condition_hash",
+        "type",
+        "movie_name",
+        "short_movie_name",
+        "duration",
+        order_by="trial_idx",
+        as_dict=True,
+    )
 
-        movie_name, short_movie_name, duration = (nda.Clip() & hash_key).fetch1(
-            "movie_name", "short_movie_name", "duration"
-        )
+    for trial_data in all_trial_data:
 
         clip_table.add_interval(
-            condition_hash=condition_hash,
-            start_time=times[0],
-            stop_time=times[1],
-            movie_name=movie_name,
-            short_movie_name=short_movie_name,
-            duration=duration,
+            id=trial_data["trial_idx"],
+            start_time=trial_data["start_frame_time"] + time_offset,
+            stop_time=trial_data["end_frame_time"] + time_offset,
+            condition_hash=trial_data["condition_hash"],
+            stimulus_type=trial_data["type"],
+            movie_name=trial_data["movie_name"],
+            short_movie_name=trial_data["short_movie_name"],
+            duration=trial_data["duration"],
         )
 
     nwb.add_time_intervals(clip_table)
 
 
-def add_trials_from_monet2(nwb, condition_hashes, timestamps):
-    if not condition_hashes:
-        return
+def add_trials_from_monet2(nwb, scan_key, time_offset):
 
     monet2_table = TimeIntervals(
         name="Monet2",
@@ -158,6 +136,7 @@ def add_trials_from_monet2(nwb, condition_hashes, timestamps):
     )
 
     monet2_columns = [
+        ("stimulus_type", "The type of stimulus."),
         ("condition_hash", "The hash for the stimulus condition."),
         ("rng_seed", "Random number generate seed for the stimulus movie."),
         ("duration", "Duration of clip in seconds."),
@@ -170,58 +149,50 @@ def add_trials_from_monet2(nwb, condition_hashes, timestamps):
         ("ori_fraction", "The fraction of stimulus with coherent orientation vs unoriented."),
         ("ori_mix", "The mixin-coefficient of orientation biased noise."),
         ("num_directions", "The number of directions."),
-        # ("speed", "units/s motion component, where unit is display width"),
-        # ("directions", "computed directions of motion (deg)"),
-        # ("onsets", "computed directions of motion (deg)"),
     ]
-
     for column_name, column_description in monet2_columns:
         monet2_table.add_column(column_name, column_description)
 
-    for condition_hash, times in zip(condition_hashes, timestamps):
-        hash_key = {"condition_hash": condition_hash}
+    all_trial_data = ((nda.Trial & scan_key) * nda.Monet2).fetch(
+        "trial_idx",
+        "start_frame_time",
+        "end_frame_time",
+        "condition_hash",
+        "type",
+        "rng_seed",
+        "duration",
+        "blue_green_saturation",
+        "pattern_width",
+        "pattern_aspect",
+        "temp_kernel",
+        "temp_bandwidth",
+        "ori_coherence",
+        "ori_fraction",
+        "ori_mix",
+        "n_dirs",
+        order_by="trial_idx",
+        as_dict=True,
+    )
 
-        (
-            rng_seed,
-            duration,
-            blue_green_saturation,
-            pattern_width,
-            pattern_aspect,
-            temp_kernel,
-            temp_bandwidth,
-            ori_coherence,
-            ori_fraction,
-            ori_mix,
-            num_directions,
-        ) = (nda.Monet2() & hash_key).fetch1(
-            "rng_seed",
-            "duration",
-            "blue_green_saturation",
-            "pattern_width",
-            "pattern_aspect",
-            "temp_kernel",
-            "temp_bandwidth",
-            "ori_coherence",
-            "ori_fraction",
-            "ori_mix",
-            "n_dirs",
-        )
+    for trial_data in all_trial_data:
 
         monet2_table.add_interval(
-            condition_hash=condition_hash,
-            start_time=times[0],
-            stop_time=times[1],
-            rng_seed=rng_seed,
-            duration=duration,
-            blue_green_saturation=blue_green_saturation,
-            pattern_width=pattern_width,
-            pattern_aspect=pattern_aspect,
-            temp_kernel=temp_kernel,
-            temp_bandwidth=temp_bandwidth,
-            ori_coherence=ori_coherence,
-            ori_fraction=ori_fraction,
-            ori_mix=ori_mix,
-            num_directions=num_directions,
+            id=trial_data["trial_idx"],
+            start_time=trial_data["start_frame_time"] + time_offset,
+            stop_time=trial_data["end_frame_time"] + time_offset,
+            condition_hash=trial_data["condition_hash"],
+            stimulus_type=trial_data["type"],
+            rng_seed=trial_data["rng_seed"],
+            duration=trial_data["duration"],
+            blue_green_saturation=trial_data["blue_green_saturation"],
+            pattern_width=trial_data["pattern_width"],
+            pattern_aspect=trial_data["pattern_aspect"],
+            temp_kernel=trial_data["temp_kernel"],
+            temp_bandwidth=trial_data["temp_bandwidth"],
+            ori_coherence=trial_data["ori_coherence"],
+            ori_fraction=trial_data["ori_fraction"],
+            ori_mix=trial_data["ori_mix"],
+            num_directions=trial_data["n_dirs"],
         )
 
     nwb.add_time_intervals(monet2_table)
