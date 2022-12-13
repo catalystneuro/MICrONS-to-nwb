@@ -3,9 +3,6 @@ from pynwb.epoch import TimeIntervals
 
 
 def add_trials(scan_key, nwb, timestamps):
-    nwb.add_trial_column("condition_hash", "condition hash")
-    nwb.add_trial_column("stimulus_type", "stimulus type")
-
     stimulus_types, condition_hashes, trial_idxs = (nda.Trial & scan_key).fetch(
         "type", "condition_hash", "trial_idx", order_by="trial_idx"
     )
@@ -33,14 +30,6 @@ def add_trials(scan_key, nwb, timestamps):
         elif "Monet2" in stimulus_type:
             monet2_condition_hashes.append(condition_hash)
             monet2_timestamps.append((start_time, stop_time))
-
-        nwb.add_trial(
-            id=trial_idx,
-            start_time=start_time,
-            stop_time=stop_time,
-            stimulus_type=stimulus_type,
-            condition_hash=condition_hash,
-        )
 
     add_trials_from_trippy(nwb, condition_hashes=trippy_condition_hashes, timestamps=trippy_timestamps)
     add_trials_from_clip(nwb, condition_hashes=clip_condition_hashes, timestamps=clip_timestamps)
