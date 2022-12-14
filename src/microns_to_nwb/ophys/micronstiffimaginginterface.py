@@ -79,7 +79,9 @@ class MicronsTiffImagingInterface(BaseDataInterface):
         ) as nwbfile_out:
 
             ophys = get_module(nwbfile_out, "ophys")
-            frame_times = ophys.get_data_interface("Fluorescence").roi_response_series["RoiResponseSeries1"].timestamps[:]
+            frame_times = (
+                ophys.get_data_interface("Fluorescence").roi_response_series["RoiResponseSeries1"].timestamps[:]
+            )
             for plane_index in tqdm(range(num_fields)):
                 imaging_extractor = MicronsTiffImagingExtractor(
                     file_path=self.source_data["file_path"],
