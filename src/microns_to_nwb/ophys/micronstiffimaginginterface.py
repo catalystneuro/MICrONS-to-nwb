@@ -1,7 +1,7 @@
 from typing import Optional
 
 from neuroconv.basedatainterface import BaseDataInterface
-from neuroconv.tools.nwb_helpers import make_or_load_nwbfile
+from neuroconv.tools.nwb_helpers import make_or_load_nwbfile, get_module
 from neuroconv.tools.roiextractors import add_two_photon_series
 from neuroconv.utils import FilePathType
 from phase3 import nda
@@ -19,17 +19,11 @@ class MicronsTiffImagingInterface(BaseDataInterface):
         file_path: FilePathType,
         cache_storage: FilePathType,
         scan_key: dict,
-        # sampling_frequency: float,
-        # num_planes: int,
-        # num_frames_per_plane: int,
     ):
         super().__init__(
             file_path=file_path,
             cache_storage=cache_storage,
             scan_key=scan_key,
-            # sampling_frequency=sampling_frequency,
-            # num_planes=num_planes,
-            # num_frames_per_plane=num_frames_per_plane,
         )
 
     def get_metadata(self):
@@ -69,7 +63,8 @@ class MicronsTiffImagingInterface(BaseDataInterface):
         stub_frames: int = 100,
         overwrite: bool = False,
         verbose: bool = True,
-        **conversion_options,
+        iterator_type: Optional[str] = "v2",
+        iterator_options: Optional[dict] = None,
     ):
         num_frames, num_fields, sampling_frequency = (nda.Scan & self.source_data["scan_key"]).fetch1(
             "nframes", "nfields", "fps"
@@ -83,6 +78,8 @@ class MicronsTiffImagingInterface(BaseDataInterface):
             verbose=verbose,
         ) as nwbfile_out:
 
+            ophys = get_module(nwbfile_out, "ophys")
+            frame_times = ophys.get_data_interface("Fluorescence").roi_response_series["RoiResponseSeries1"].timestamps[:]
             for plane_index in tqdm(range(num_fields)):
                 imaging_extractor = MicronsTiffImagingExtractor(
                     file_path=self.source_data["file_path"],
@@ -92,6 +89,8 @@ class MicronsTiffImagingInterface(BaseDataInterface):
                     num_frames_per_plane=num_frames,
                 )
 
+                imaging_extractor.set_times(times=frame_times)
+
                 if stub_test:
                     extractor = imaging_extractor.frame_slice(0, stub_frames)
 
@@ -100,4 +99,6 @@ class MicronsTiffImagingInterface(BaseDataInterface):
                     nwbfile=nwbfile_out,
                     metadata=metadata,
                     two_photon_series_index=plane_index,
+                    iterator_type=iterator_type,
+                    iterator_options=iterator_options,
                 )
