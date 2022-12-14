@@ -97,7 +97,7 @@ def add_roi_response_series(field_key, nwb, plane_segmentation, timestamps):
     )
 
     roi_response_series = RoiResponseSeries(
-        name=f"RioResponseSeries{field_key['field']}",
+        name=f"RoiResponseSeries{field_key['field']}",
         description=f"The fluorescence traces for field {field_key['field']}",
         data=H5DataIO(continuous_traces, compression=True),
         rois=roi_table_region,
