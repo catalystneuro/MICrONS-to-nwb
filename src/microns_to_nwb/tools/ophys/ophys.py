@@ -1,4 +1,7 @@
+import warnings
+
 import numpy as np
+import pandas as pd
 from hdmf.backends.hdf5 import H5DataIO
 from phase3 import nda, func
 from pynwb.base import Images
@@ -10,6 +13,7 @@ from pynwb.ophys import (
     OpticalChannel,
 )
 
+from tools.cave_client import get_client
 from tools.nwb_helpers import check_module
 
 
@@ -73,6 +77,69 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
     )
 
     return plane_segmentation
+
+
+def add_functional_coregistration_to_plane_segmentation(field_key, plane_segmentation):
+
+    functional_coregistration = get_functional_coregistration(
+        field_key=field_key,
+    )
+    if functional_coregistration.empty:
+        return
+
+    pt_supervoxel_ids = []
+    pt_root_ids = []
+    pt_positions = []
+    # filter down to units for this field
+    unit_ids = (nda.ScanUnit() & field_key).fetch("unit_id")
+    for unit_id in unit_ids:
+        df = functional_coregistration[functional_coregistration["unit_id"] == unit_id]
+        if df.empty:
+            pt_supervoxel_ids.append(np.nan)
+            pt_root_ids.append(np.nan)
+            pt_positions.append(np.nan)
+        else:
+            pt_supervoxel_ids.extend(df["pt_supervoxel_id"].values)
+            pt_root_ids.extend(df["pt_root_id"].values)
+            pt_positions.extend(df["pt_position"].values)
+
+    plane_segmentation.add_column(
+        name="pt_supervoxel_id",
+        description="The ID of the supervoxel from the watershed segmentation that is under the pt_position.",
+        data=pt_supervoxel_ids,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_root_id",
+        description="The ID of the segment/root_id under the pt_position from the Proofread Segmentation (v343).",
+        data=pt_supervoxel_ids,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_position",
+        description="The location in 4,4,40 nm voxels at a cell body for the cell.",
+        data=pt_supervoxel_ids,
+    )
+
+
+def get_functional_coregistration(field_key):
+    try:
+        client = get_client(token="b67d212181d8c6e5f47e8fd020b01120")
+    except Exception as e:
+        warnings.warn(
+            f"There was an error with CAVE client: {e}"
+        )
+        return pd.DataFrame()
+
+    unit_ids = (nda.ScanUnit() & field_key).fetch("unit_id")
+    session_id = field_key["session"]
+    scan_id = field_key["scan_idx"]
+
+    functional_coreg_df = client.materialize.query_table(
+        table='functional_coreg',
+        filter_in_dict=dict(session=[session_id], scan_idx=[scan_id], unit_id=unit_ids),
+    )
+    return functional_coreg_df
 
 
 def _get_fluorescence(nwb, fluorescence_name):
@@ -150,5 +217,9 @@ def add_ophys(scan_key, nwb, timestamps):
         field_key = {**scan_key, **dict(field=field_data["field"])}
 
         plane_segmentation = add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation)
+        add_functional_coregistration_to_plane_segmentation(
+            field_key=field_key,
+            plane_segmentation=plane_segmentation,
+        )
         add_roi_response_series(field_key, nwb, plane_segmentation, timestamps)
         add_summary_images(field_key, nwb)
