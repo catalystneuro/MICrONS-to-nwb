@@ -1,1 +1,1 @@
-from .stimulus import add_stimulus
+from .stimulus import resample_flips
