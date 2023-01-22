@@ -1,4 +1,6 @@
+import warnings
 from pathlib import Path
+from warnings import warn
 
 import pandas as pd
 
@@ -16,7 +18,12 @@ from tools.behavior import find_earliest_timestamp
 from tools.stimulus import resample_flips
 
 
-def convert_session(ophys_file_path: str, stimulus_movie_file_paths: list, nwbfile_path: str):
+def convert_session(
+    ophys_file_path: str,
+    stimulus_movie_file_paths: list,
+    nwbfile_path: str,
+    verbose: bool = True,
+):
     """Wrap converter for parallel execution."""
 
     scan_key = dict(
@@ -37,9 +44,13 @@ def convert_session(ophys_file_path: str, stimulus_movie_file_paths: list, nwbfi
         behavior_timestamps_arrays=[pupil_timestamps, treadmill_timestamps],
     )
     stimulus_timestamps = resample_flips(scan_key=scan_key)
+    if verbose:
+        print("Stimulus movie timestamps are reconstructed based on inter-trial times!")
     stimulus_timestamps += abs(earliest_timestamp_in_behavior)
 
     nwbfile = build_nwb(scan_key, time_offset=earliest_timestamp_in_behavior)
+    if verbose:
+        print("Behavior, trials, and Fluorescence traces are added from datajoint.")
 
     converter = MICrONSNWBConverter(source_data=source_data)
     metadata = converter.get_metadata()
@@ -56,9 +67,17 @@ def convert_session(ophys_file_path: str, stimulus_movie_file_paths: list, nwbfi
         ),
     )
 
-    converter.run_conversion(
-        nwbfile=nwbfile,
-        nwbfile_path=nwbfile_path,
-        metadata=metadata,
-        conversion_options=conversion_options,
-    )
+    try:
+        converter.run_conversion(
+            nwbfile=nwbfile,
+            nwbfile_path=nwbfile_path,
+            metadata=metadata,
+            conversion_options=conversion_options,
+        )
+        if verbose:
+            print("Conversion successful.")
+
+        return ophys_file_path
+
+    except Exception as e:
+        warn(f"There was an error during conversion. The source files are not removed. The full traceback: {e}")
