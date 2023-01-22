@@ -6,10 +6,9 @@ from tools.behavior import add_eye_tracking, add_treadmill, find_earliest_timest
 from tools.intervals import add_trials
 from tools.nwb_helpers import start_nwb
 from tools.ophys import add_ophys
-from tools.stimulus import add_stimulus
 
 
-def build_nwb(scan_key):
+def build_nwb(scan_key, time_offset: int = None):
     nwb = start_nwb(scan_key)
 
     # Shifting times to earliest provided behavioral timestamp when necessary
@@ -17,15 +16,14 @@ def build_nwb(scan_key):
     treadmill_timestamps = (nda.RawTreadmill & scan_key).fetch1("treadmill_timestamps")
     frame_times = (nda.FrameTimes & scan_key).fetch1("frame_times")
 
-    first_timestamp_in_behavior = find_earliest_timestamp([pupil_timestamps, treadmill_timestamps])
-    if first_timestamp_in_behavior < 0:
+    if time_offset < 0:
         warn(
             "Writing behavior data to NWB with negative timestamps is not recommended,"
-            f"times are shifted to the earliest behavioral timestamp by {abs(first_timestamp_in_behavior)} seconds."
+            f"times are shifted to the earliest behavioral timestamp by {abs(time_offset)} seconds."
         )
-        pupil_timestamps = pupil_timestamps + abs(first_timestamp_in_behavior)
-        treadmill_timestamps = treadmill_timestamps + abs(first_timestamp_in_behavior)
-        frame_times = frame_times + abs(first_timestamp_in_behavior)
+        pupil_timestamps = pupil_timestamps + abs(time_offset)
+        treadmill_timestamps = treadmill_timestamps + abs(time_offset)
+        frame_times = frame_times + abs(time_offset)
 
     # The stimulus images were synchronized with field 1 frame times
     add_stimulus(scan_key, nwb, timestamps=frame_times)
