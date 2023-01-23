@@ -1,8 +1,5 @@
-import warnings
 from pathlib import Path
 from warnings import warn
-
-import pandas as pd
 
 import datajoint as dj
 
