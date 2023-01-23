@@ -1,7 +1,9 @@
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from pathlib import Path
 from warnings import warn
 
 import datajoint as dj
+from tqdm import tqdm
 
 dj.config["database.host"] = "tutorial-db.datajoint.io"
 dj.config["database.user"] = "microns"
@@ -82,3 +84,39 @@ def convert_session(
 
     except Exception as e:
         warn(f"There was an error during conversion. The source files are not removed. The full traceback: {e}")
+
+
+def parallel_convert_sessions(
+    num_parallel_jobs: int,
+    nwbfile_list: list,
+    ophys_file_paths: list,
+    stimulus_movie_file_paths: list,
+    stimulus_movie_timestamps_file_paths: list,
+):
+    with ProcessPoolExecutor(max_workers=num_parallel_jobs) as executor:
+        with tqdm(total=len(ophys_file_paths), position=0, leave=False) as progress_bar:
+            futures = []
+            for nwbfile_path, ophys_file_path, stimulus_movie_file_path, stimulus_movie_timestamps_file_path in zip(
+                nwbfile_list,
+                ophys_file_paths,
+                stimulus_movie_file_paths,
+                stimulus_movie_timestamps_file_paths,
+            ):
+                futures.append(
+                    executor.submit(
+                        convert_session,
+                        nwbfile_path=nwbfile_path,
+                        ophys_file_path=str(ophys_file_path),
+                        stimulus_movie_file_paths=[stimulus_movie_file_path],
+                        stimulus_movie_timestamps_file_path=stimulus_movie_timestamps_file_path,
+                        verbose=False,
+                    )
+                )
+            for future in as_completed(futures):
+                source_file_path = future.result()
+                progress_bar.update(1)
+                if source_file_path:
+                    try:
+                        Path(source_file_path).unlink()
+                    except PermissionError:  # pragma: no cover
+                        warn(f"Unable to clean up source file {source_file_path}! Please manually delete them.")
