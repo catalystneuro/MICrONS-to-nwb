@@ -13,7 +13,7 @@ from pynwb.ophys import (
     OpticalChannel,
 )
 
-from tools.cave_client import get_client
+from tools.cave_client import get_client, get_token_from_external_file
 from tools.nwb_helpers import check_module
 
 
@@ -124,11 +124,10 @@ def add_functional_coregistration_to_plane_segmentation(field_key, plane_segment
 
 def get_functional_coregistration(field_key):
     try:
-        client = get_client(token="b67d212181d8c6e5f47e8fd020b01120")
+        token = get_token_from_external_file("../../caveclient_token.json")
+        client = get_client(token=token)
     except Exception as e:
-        warnings.warn(
-            f"There was an error with CAVE client: {e}"
-        )
+        warnings.warn(f"There was an error with CAVE client: {e}")
         return pd.DataFrame()
 
     unit_ids = (nda.ScanUnit() & field_key).fetch("unit_id")
@@ -136,7 +135,7 @@ def get_functional_coregistration(field_key):
     scan_id = field_key["scan_idx"]
 
     functional_coreg_df = client.materialize.query_table(
-        table='functional_coreg',
+        table="functional_coreg",
         filter_in_dict=dict(session=[session_id], scan_idx=[scan_id], unit_id=unit_ids),
     )
     return functional_coreg_df
