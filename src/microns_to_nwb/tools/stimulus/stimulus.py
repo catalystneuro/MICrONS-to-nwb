@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 def reconstruct_refresh_rate_flips(trial_key, intertrial_time, tol, est_refresh_rate):
     """
+    Author: Paul Fahey
     Fetch trial flips, reformats to monitor refresh rate including intertrial times
 
     Args:
@@ -97,6 +98,7 @@ def reconstruct_refresh_rate_flips(trial_key, intertrial_time, tol, est_refresh_
 
 def resample_flips(scan_key, tol=2e-3, est_refresh_rate=60):
     """
+    Author: Paul Fahey
     Fetch stimulus flips, reformats to monitor refresh rate including intertrial times and pre/post stimulus
 
     Args:
