@@ -1,1 +1,1 @@
-from .stimulus import add_stimulus
+from .stimulus import get_stimulus_movie_timestamps
