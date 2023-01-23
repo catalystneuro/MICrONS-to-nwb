@@ -25,8 +25,6 @@ def build_nwb(scan_key, time_offset: int = None):
         treadmill_timestamps = treadmill_timestamps + abs(time_offset)
         frame_times = frame_times + abs(time_offset)
 
-    # The stimulus images were synchronized with field 1 frame times
-    add_stimulus(scan_key, nwb, timestamps=frame_times)
     # Add eye position and pupil radius
     add_eye_tracking(scan_key, nwb, timestamps=pupil_timestamps)
     # Add the velocity of the treadmill
