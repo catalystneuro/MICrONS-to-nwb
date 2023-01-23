@@ -15,12 +15,13 @@ from phase3 import nda
 from convert_microns_to_nwb import build_nwb
 from micronsnwbconverter import MICrONSNWBConverter
 from tools.behavior import find_earliest_timestamp
-from tools.stimulus import resample_flips
+from tools.stimulus import get_stimulus_movie_timestamps
 
 
 def convert_session(
     ophys_file_path: str,
     stimulus_movie_file_paths: list,
+    stimulus_movie_timestamps_file_path: str,
     nwbfile_path: str,
     verbose: bool = True,
 ):
@@ -43,7 +44,10 @@ def convert_session(
     earliest_timestamp_in_behavior = find_earliest_timestamp(
         behavior_timestamps_arrays=[pupil_timestamps, treadmill_timestamps],
     )
-    stimulus_timestamps = resample_flips(scan_key=scan_key)
+    stimulus_timestamps = get_stimulus_movie_timestamps(
+        scan_key=scan_key,
+        file_path=stimulus_movie_timestamps_file_path,
+    )
     if verbose:
         print("Stimulus movie timestamps are reconstructed based on inter-trial times!")
     stimulus_timestamps += abs(earliest_timestamp_in_behavior)
