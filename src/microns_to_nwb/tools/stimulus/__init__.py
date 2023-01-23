@@ -1,1 +1,1 @@
-from .stimulus import resample_flips
+from .stimulus import get_stimulus_movie_timestamps
