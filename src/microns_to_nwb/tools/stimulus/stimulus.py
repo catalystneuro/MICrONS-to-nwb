@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 from phase3 import nda
 from itertools import repeat
 
@@ -131,7 +134,7 @@ def resample_flips(scan_key, tol=2e-3, est_refresh_rate=60):
     all_trial_flips = np.concatenate(
         [
             reconstruct_refresh_rate_flips(*t)
-            for t in tqdm(trial_iter, total=len(trial_keys), desc="Reconstructing timestamps ...")
+            for t in tqdm(trial_iter, total=len(trial_keys), desc="Reconstructing stimulus movie timestamps ...")
         ]
     )
 
@@ -167,3 +170,14 @@ def resample_flips(scan_key, tol=2e-3, est_refresh_rate=60):
     full_flips = np.concatenate((prepad_flips, all_trial_flips, postpad_flips))
 
     return full_flips, emp_refresh_rate
+
+
+def get_stimulus_movie_timestamps(scan_key, file_path: str = None):
+    if file_path is not None and Path(file_path).is_file():
+        return pd.read_csv(file_path)["timestamps"].values
+
+    stimulus_timestamps, _ = resample_flips(scan_key=scan_key)
+    # Write to CSV for faster read when conversion is needed to rerun
+    pd.DataFrame(data=stimulus_timestamps, columns=["timestamps"]).to_csv(file_path, index=False)
+
+    return stimulus_timestamps
