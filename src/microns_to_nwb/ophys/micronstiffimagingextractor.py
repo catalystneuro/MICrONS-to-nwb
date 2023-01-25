@@ -1,12 +1,10 @@
 from typing import Tuple, Optional
 
 import numpy as np
-import zarr
-from fsspec import filesystem
-from fsspec.implementations.cached import CachingFileSystem
+
 from neuroconv.utils import FilePathType, FloatType
 from roiextractors import ImagingExtractor
-from tifffile import imread
+from tifffile import memmap, TiffFile
 
 
 class MicronsTiffImagingExtractor(ImagingExtractor):
@@ -16,13 +14,11 @@ class MicronsTiffImagingExtractor(ImagingExtractor):
 
     def __init__(
         self,
-        file_path: FilePathType,  # S3 file path to TIF file
-        cache_storage: FilePathType,  # local cache storage for fsspec
+        file_path: FilePathType,  # file path to TIF file
         sampling_frequency: FloatType,
         plane_index: int,  # the field index
         num_frames_per_plane: int,
     ):
-        self._s3_file = None
         self.file_path = file_path
         super().__init__()
 
@@ -30,32 +26,21 @@ class MicronsTiffImagingExtractor(ImagingExtractor):
         self._plane_index = plane_index
         self._num_frames = num_frames_per_plane
 
-        # Lazy loading of image data from S3
-        self._video = self.open(cache_storage=cache_storage)
+        with TiffFile(self.file_path) as tif:
+            shape = tif.series[0].shape
+            self._dtype = tif.series[0].dtype
 
-        assert self._video.shape[0] % self._num_frames == 0
-        self._num_planes = int(self._video.shape[0] / self._num_frames)
+        self._video = memmap(self.file_path, mode="r")
+
+        assert shape[0] % self._num_frames == 0
+        self._num_planes = int(shape[0] / self._num_frames)
         self._frames_range = np.arange(self._plane_index, self._num_planes * self._num_frames, self._num_planes)
 
         self._num_channels = 1
-        self._num_rows, self._num_columns = self._video.shape[1:]
-
-    def open(self, cache_storage):
-        cfs = CachingFileSystem(
-            fs=filesystem("s3", anon=True),
-            cache_storage=cache_storage,  # Local folder for the cache
-        )
-
-        self._s3_file = cfs.open(self.file_path, "rb")
-        zarr_store = imread(self._s3_file, aszarr=True)
-
-        return zarr.open(zarr_store, mode="r")
-
-    def close(self):
-        self._s3_file.close()
+        self._num_rows, self._num_columns = shape[1:]
 
     def get_frames(self, frame_idxs, channel: int = 0):
-        return self._video.oindex[self._frames_range[frame_idxs], :, :]
+        return self._video[self._frames_range[frame_idxs], :, :]
 
     def get_video(self, start_frame=None, end_frame=None, channel: Optional[int] = 0):
         if start_frame is None:
@@ -68,7 +53,7 @@ class MicronsTiffImagingExtractor(ImagingExtractor):
             assert 0 < end_frame <= self._num_frames
         assert end_frame > start_frame, "'start_frame' must be smaller than 'end_frame'!"
 
-        return self._video.oindex[self._frames_range[start_frame:end_frame], :, :]
+        return self._video[self._frames_range[start_frame:end_frame], :, :]
 
     def get_image_size(self) -> Tuple[int, int]:
         return (self._num_rows, self._num_columns)
@@ -86,4 +71,4 @@ class MicronsTiffImagingExtractor(ImagingExtractor):
         pass
 
     def get_dtype(self):
-        return self._video.dtype
+        return self._dtype
