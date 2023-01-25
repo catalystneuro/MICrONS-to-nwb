@@ -30,3 +30,21 @@ def get_token_from_external_file(external_file_path):
         assert "token" in external_file, f"'token' field is missing from {external_file_path}."
 
     return external_file["token"]
+
+
+def get_functional_coreg_table(scan_key, token_file_path):
+    token = get_token_from_external_file(token_file_path)
+    client = get_client(token=token)
+
+    coreg_table = client.materialize.query_table(
+        table="functional_coreg",
+        split_positions=True,
+    )
+    session = scan_key["session"]
+    scan = scan_key["scan_idx"]
+
+    coreg_table_for_this_scan = coreg_table[
+        (coreg_table["session"] == int(session)) & (coreg_table["scan_idx"] == int(scan))
+    ]
+
+    return coreg_table_for_this_scan
