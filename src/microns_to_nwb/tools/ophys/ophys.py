@@ -1,7 +1,4 @@
-import warnings
-
 import numpy as np
-import pandas as pd
 from hdmf.backends.hdf5 import H5DataIO
 from phase3 import nda, func
 from pynwb.base import Images
