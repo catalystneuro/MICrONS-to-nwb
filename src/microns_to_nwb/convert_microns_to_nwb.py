@@ -30,7 +30,7 @@ def build_nwb(scan_key, time_offset: int = None):
     # Add the velocity of the treadmill
     add_treadmill(scan_key, nwb, timestamps=treadmill_timestamps)
     # Add trials
-    add_trials(scan_key, nwb, time_offset=abs(first_timestamp_in_behavior))
+    add_trials(scan_key, nwb, time_offset=abs(time_offset))
     # Add fluorescence traces, image masks and summary images to NWB
     add_ophys(scan_key, nwb, timestamps=frame_times)
 
