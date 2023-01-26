@@ -10,7 +10,7 @@ from pynwb.ophys import (
     OpticalChannel,
 )
 
-from tools.cave_client.cave import get_functional_coreg_table
+from tools.cave_client import get_functional_coreg_table
 from tools.nwb_helpers import check_module
 
 
