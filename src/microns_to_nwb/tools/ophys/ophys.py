@@ -193,10 +193,7 @@ def add_ophys(scan_key, nwb, timestamps):
     ophys.add(image_segmentation)
 
     # Get functional coregistration table from CAVE for this scan
-    functional_coreg_table = get_functional_coreg_table(
-        scan_key=scan_key,
-        token_file_path="../../caveclient_token.json",
-    )
+    functional_coreg_table = get_functional_coreg_table(scan_key=scan_key)
 
     all_field_data = (nda.Field & scan_key).fetch(as_dict=True)
     for field_data in all_field_data:
