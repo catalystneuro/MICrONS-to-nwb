@@ -65,7 +65,7 @@ def convert_session(
     conversion_options = dict(
         Ophys=dict(stub_test=True),
         Video=dict(
-            external_mode=True,
+            external_mode=False,
             timestamps=stimulus_timestamps.tolist(),
         ),
     )
