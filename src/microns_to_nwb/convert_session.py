@@ -23,7 +23,6 @@ from tools.stimulus import get_stimulus_movie_timestamps
 def convert_session(
     ophys_file_path: str,
     stimulus_movie_file_path: str,
-    stimulus_movie_timestamps_file_path: str,
     nwbfile_path: str,
     verbose: bool = True,
 ):
@@ -46,6 +45,9 @@ def convert_session(
     earliest_timestamp_in_behavior = find_earliest_timestamp(
         behavior_timestamps_arrays=[pupil_timestamps, treadmill_timestamps],
     )
+    stimulus_movie_file_path = Path(stimulus_movie_file_path)
+    timestamps_file_name = f"{stimulus_movie_file_path.stem}_timestamps.csv"
+    stimulus_movie_timestamps_file_path = stimulus_movie_file_path.parent / timestamps_file_name
     stimulus_timestamps = get_stimulus_movie_timestamps(
         scan_key=scan_key,
         file_path=stimulus_movie_timestamps_file_path,
@@ -115,16 +117,14 @@ def parallel_convert_sessions(
     nwbfile_list: list,
     ophys_file_paths: list,
     stimulus_movie_file_paths: list,
-    stimulus_movie_timestamps_file_paths: list,
 ):
     with ProcessPoolExecutor(max_workers=num_parallel_jobs) as executor:
         with tqdm(total=len(ophys_file_paths), position=0, leave=False) as progress_bar:
             futures = []
-            for nwbfile_path, ophys_file_path, stimulus_movie_file_path, stimulus_movie_timestamps_file_path in zip(
+            for nwbfile_path, ophys_file_path, stimulus_movie_file_path in zip(
                 nwbfile_list,
                 ophys_file_paths,
                 stimulus_movie_file_paths,
-                stimulus_movie_timestamps_file_paths,
             ):
                 futures.append(
                     executor.submit(
@@ -132,7 +132,6 @@ def parallel_convert_sessions(
                         nwbfile_path=nwbfile_path,
                         ophys_file_path=str(ophys_file_path),
                         stimulus_movie_file_path=stimulus_movie_file_path,
-                        stimulus_movie_timestamps_file_path=stimulus_movie_timestamps_file_path,
                         verbose=False,
                     )
                 )

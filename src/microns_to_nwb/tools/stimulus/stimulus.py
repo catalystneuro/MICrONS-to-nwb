@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from neuroconv.utils import FilePathType
 from phase3 import nda
 from itertools import repeat
 
@@ -174,7 +175,7 @@ def resample_flips(scan_key, tol=2e-3, est_refresh_rate=60):
     return full_flips, emp_refresh_rate
 
 
-def get_stimulus_movie_timestamps(scan_key, file_path: str = None):
+def get_stimulus_movie_timestamps(scan_key, file_path: FilePathType = None):
     if file_path is not None and Path(file_path).is_file():
         return pd.read_csv(file_path)["timestamps"].values
 
