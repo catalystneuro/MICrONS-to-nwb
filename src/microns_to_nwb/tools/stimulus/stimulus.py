@@ -64,7 +64,6 @@ def reconstruct_refresh_rate_flips(trial_key, intertrial_time, tol, est_refresh_
 
     trial_flip_times, trial_movie = [], []
     for interblock_time, block_flips in zip(interblock_times, block_flip_sets):
-
         assert np.all(np.abs(np.diff(block_flips) - (1 / frame_rate)) < tol), "frame rate deviation > 1 ms detected"
 
         # last flip and interblock period at refresh rate
