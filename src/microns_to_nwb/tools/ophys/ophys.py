@@ -48,7 +48,14 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
 
     plane_segmentation = image_segmentation.create_plane_segmentation(
         name=f"PlaneSegmentation{field_key['field']}",
-        description="output from segmenting my favorite imaging plane",
+        description=(
+            f"The output from segmenting field {field_key['field']} contains "
+            "the image masks (weights and mask classification) and the structural "
+            f"ids extracted from the CAVE database on {nwb.file_create_date[0].strftime('%Y-%m-%d')}. "
+            "To access the latest revision from the live resource see "
+            "the notebook that is linked to the dandiset. The structual ids "
+            "might not exist for all plane segmentations.",
+        ),
         imaging_plane=imaging_plane,
         id=mask_ids,
     )
