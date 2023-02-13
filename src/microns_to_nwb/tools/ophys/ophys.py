@@ -98,6 +98,10 @@ def add_functional_coregistration_to_plane_segmentation(
 
     # filter down to units for this field
     unit_ids = (nda.ScanUnit() & field_key).fetch("unit_id")
+
+    # skip when none of the units have entries in the coreg table
+    if not any(functional_coreg_table["unit_id"].isin(unit_ids)):
+        return
     for unit_id in unit_ids:
         df = functional_coreg_table[functional_coreg_table["unit_id"] == unit_id]
         if df.empty:
