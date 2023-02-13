@@ -10,6 +10,7 @@ from pynwb.ophys import (
     OpticalChannel,
 )
 
+from tools.cave_client import get_functional_coreg_table
 from tools.nwb_helpers import check_module
 
 
@@ -47,7 +48,12 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
 
     plane_segmentation = image_segmentation.create_plane_segmentation(
         name=f"PlaneSegmentation{field_key['field']}",
-        description="output from segmenting my favorite imaging plane",
+        description=f"The output from segmenting field {field_key['field']} contains "
+        "the image masks (weights and mask classification) and the structural "
+        f"ids extracted from the CAVE database on {nwb.file_create_date[0].strftime('%Y-%m-%d')}. "
+        "To access the latest revision from the live resource see "
+        "the notebook that is linked to the dandiset. The structual ids "
+        "might not exist for all plane segmentations.",
         imaging_plane=imaging_plane,
         id=mask_ids,
     )
@@ -73,6 +79,83 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
     )
 
     return plane_segmentation
+
+
+def add_functional_coregistration_to_plane_segmentation(
+    field_key,
+    functional_coreg_table,
+    plane_segmentation,
+):
+    if functional_coreg_table.empty:
+        return
+
+    pt_supervoxel_ids = []
+    pt_root_ids = []
+    pt_x_positions = []
+    pt_y_positions = []
+    pt_z_positions = []
+    cave_ids = []
+
+    # filter down to units for this field
+    unit_ids = (nda.ScanUnit() & field_key).fetch("unit_id")
+
+    # skip when none of the units have entries in the coreg table
+    if not any(functional_coreg_table["unit_id"].isin(unit_ids)):
+        return
+    for unit_id in unit_ids:
+        df = functional_coreg_table[functional_coreg_table["unit_id"] == unit_id]
+        if df.empty:
+            pt_supervoxel_ids.append(np.nan)
+            pt_root_ids.append(np.nan)
+            pt_x_positions.append(np.nan)
+            pt_y_positions.append(np.nan)
+            pt_z_positions.append(np.nan)
+            cave_ids.append([np.nan])
+
+        else:
+            pt_supervoxel_ids.extend(df["pt_supervoxel_id"].drop_duplicates().tolist())
+            pt_root_ids.extend(df["pt_root_id"].drop_duplicates().tolist())
+            pt_x_positions.extend(df["pt_position_x"].drop_duplicates().tolist())
+            pt_y_positions.extend(df["pt_position_y"].drop_duplicates().tolist())
+            pt_z_positions.extend(df["pt_position_z"].drop_duplicates().tolist())
+            cave_ids.append(df["id"].values.tolist())
+
+    plane_segmentation.add_column(
+        name="cave_ids",
+        description=f"The identifier(s) in CAVE for field {field_key['field']}.",
+        data=cave_ids,
+        index=True,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_supervoxel_id",
+        description="The ID of the supervoxel from the watershed segmentation that is under the pt_position.",
+        data=pt_supervoxel_ids,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_root_id",
+        description="The ID of the segment/root_id under the pt_position from the Proofread Segmentation (v343).",
+        data=pt_supervoxel_ids,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_x_position",
+        description="The x location in 4,4,40 nm voxels at a cell body for the cell.",
+        data=pt_x_positions,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_y_position",
+        description="The y location in 4,4,40 nm voxels at a cell body for the cell.",
+        data=pt_y_positions,
+    )
+
+    plane_segmentation.add_column(
+        name="pt_z_position",
+        description="The z location in 4,4,40 nm voxels at a cell body for the cell.",
+        data=pt_z_positions,
+    )
 
 
 def _get_fluorescence(nwb, fluorescence_name):
@@ -116,6 +199,10 @@ def add_ophys(scan_key, nwb, timestamps):
     ophys = nwb.create_processing_module("ophys", "processed 2p data")
     image_segmentation = ImageSegmentation()
     ophys.add(image_segmentation)
+
+    # Get functional coregistration table from CAVE for this scan
+    functional_coreg_table = get_functional_coreg_table(scan_key=scan_key)
+
     all_field_data = (nda.Field & scan_key).fetch(as_dict=True)
     for field_data in all_field_data:
         optical_channel = OpticalChannel(
@@ -149,5 +236,10 @@ def add_ophys(scan_key, nwb, timestamps):
         field_key = {**scan_key, **dict(field=field_data["field"])}
 
         plane_segmentation = add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation)
+        add_functional_coregistration_to_plane_segmentation(
+            field_key=field_key,
+            functional_coreg_table=functional_coreg_table,
+            plane_segmentation=plane_segmentation,
+        )
         add_roi_response_series(field_key, nwb, plane_segmentation, timestamps)
         add_summary_images(field_key, nwb)

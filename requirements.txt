@@ -1,3 +1,4 @@
 phase3@ git+https://github.com/cajal/microns_phase3_nda.git
 em-coregistration@ git+https://github.com/AllenInstitute/em_coregistration.git@phase3
 pynwb>=2.2.0
+caveclient==4.17.1
