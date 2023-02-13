@@ -2,17 +2,20 @@ from phase3 import nda
 from pynwb.epoch import TimeIntervals
 
 
-def add_trials(scan_key, nwb, time_offset):
+def add_trials(scan_key, nwb, trial_times):
 
     # Add trials from "Trippy" stimulus type
-    add_trials_from_trippy(nwb, scan_key=scan_key, time_offset=time_offset)
+    trippy_times = trial_times[trial_times["type"] == "stimulus.Trippy"]
+    add_trials_from_trippy(nwb, scan_key=scan_key, trial_times=trippy_times)
     # Add trials from "Clip" stimulus type
-    add_trials_from_clip(nwb, scan_key=scan_key, time_offset=time_offset)
+    clip_times = trial_times[trial_times["type"] == "stimulus.Clip"]
+    add_trials_from_clip(nwb, scan_key=scan_key, trial_times=clip_times)
     # Add trials from "Monet2" stimulus type
-    add_trials_from_monet2(nwb, scan_key=scan_key, time_offset=time_offset)
+    monet2_times = trial_times[trial_times["type"] == "stimulus.Monet2"]
+    add_trials_from_monet2(nwb, scan_key=scan_key, trial_times=monet2_times)
 
 
-def add_trials_from_trippy(nwb, scan_key, time_offset):
+def add_trials_from_trippy(nwb, scan_key, trial_times):
 
     trippy_table = TimeIntervals(
         name="Trippy",
@@ -41,8 +44,6 @@ def add_trials_from_trippy(nwb, scan_key, time_offset):
 
     all_trial_data = ((nda.Trial & scan_key) * nda.Trippy).fetch(
         "trial_idx",
-        "start_frame_time",
-        "end_frame_time",
         "condition_hash",
         "type",
         "rng_seed",
@@ -60,11 +61,12 @@ def add_trials_from_trippy(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
+        trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
 
         trippy_table.add_interval(
             id=trial_data["trial_idx"],
-            start_time=trial_data["start_frame_time"] + time_offset,
-            stop_time=trial_data["end_frame_time"] + time_offset,
+            start_time=trial_time["start_frame_time"].values[0],
+            stop_time=trial_time["end_frame_time"].values[0],
             condition_hash=trial_data["condition_hash"],
             stimulus_type=trial_data["type"],
             rng_seed=trial_data["rng_seed"],
@@ -82,7 +84,7 @@ def add_trials_from_trippy(nwb, scan_key, time_offset):
     nwb.add_time_intervals(trippy_table)
 
 
-def add_trials_from_clip(nwb, scan_key, time_offset):
+def add_trials_from_clip(nwb, scan_key, trial_times):
 
     clip_table = TimeIntervals(
         name="Clip",
@@ -101,8 +103,6 @@ def add_trials_from_clip(nwb, scan_key, time_offset):
 
     all_trial_data = ((nda.Trial & scan_key) * nda.Clip).fetch(
         "trial_idx",
-        "start_frame_time",
-        "end_frame_time",
         "condition_hash",
         "type",
         "movie_name",
@@ -113,11 +113,12 @@ def add_trials_from_clip(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
+        trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
 
         clip_table.add_interval(
             id=trial_data["trial_idx"],
-            start_time=trial_data["start_frame_time"] + time_offset,
-            stop_time=trial_data["end_frame_time"] + time_offset,
+            start_time=trial_time["start_frame_time"].values[0],
+            stop_time=trial_time["end_frame_time"].values[0],
             condition_hash=trial_data["condition_hash"],
             stimulus_type=trial_data["type"],
             movie_name=trial_data["movie_name"],
@@ -128,7 +129,7 @@ def add_trials_from_clip(nwb, scan_key, time_offset):
     nwb.add_time_intervals(clip_table)
 
 
-def add_trials_from_monet2(nwb, scan_key, time_offset):
+def add_trials_from_monet2(nwb, scan_key, trial_times):
 
     monet2_table = TimeIntervals(
         name="Monet2",
@@ -155,8 +156,6 @@ def add_trials_from_monet2(nwb, scan_key, time_offset):
 
     all_trial_data = ((nda.Trial & scan_key) * nda.Monet2).fetch(
         "trial_idx",
-        "start_frame_time",
-        "end_frame_time",
         "condition_hash",
         "type",
         "rng_seed",
@@ -175,11 +174,12 @@ def add_trials_from_monet2(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
+        trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
 
         monet2_table.add_interval(
             id=trial_data["trial_idx"],
-            start_time=trial_data["start_frame_time"] + time_offset,
-            stop_time=trial_data["end_frame_time"] + time_offset,
+            start_time=trial_time["start_frame_time"].values[0],
+            stop_time=trial_time["end_frame_time"].values[0],
             condition_hash=trial_data["condition_hash"],
             stimulus_type=trial_data["type"],
             rng_seed=trial_data["rng_seed"],
