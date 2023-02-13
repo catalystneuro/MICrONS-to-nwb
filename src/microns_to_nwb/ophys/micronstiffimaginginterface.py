@@ -102,7 +102,6 @@ class MicronsTiffImagingInterface(BaseDataInterface):
             overwrite=overwrite,
             verbose=verbose,
         ) as nwbfile_out:
-
             ophys = get_module(nwbfile_out, "ophys")
             frame_times = (
                 ophys.get_data_interface("Fluorescence").roi_response_series["RoiResponseSeries1"].timestamps[:]

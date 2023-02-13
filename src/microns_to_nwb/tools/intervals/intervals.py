@@ -3,7 +3,6 @@ from pynwb.epoch import TimeIntervals
 
 
 def add_trials(scan_key, nwb, trial_times):
-
     # Add trials from "Trippy" stimulus type
     trippy_times = trial_times[trial_times["type"] == "stimulus.Trippy"]
     add_trials_from_trippy(nwb, scan_key=scan_key, trial_times=trippy_times)
@@ -16,7 +15,6 @@ def add_trials(scan_key, nwb, trial_times):
 
 
 def add_trials_from_trippy(nwb, scan_key, trial_times):
-
     trippy_table = TimeIntervals(
         name="Trippy",
         description="The stimulus table for the cosine of a smoothened noise phase movie.",
@@ -62,7 +60,6 @@ def add_trials_from_trippy(nwb, scan_key, trial_times):
 
     for trial_data in all_trial_data:
         trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
-
         trippy_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_time["start_frame_time"].values[0],
@@ -85,7 +82,6 @@ def add_trials_from_trippy(nwb, scan_key, trial_times):
 
 
 def add_trials_from_clip(nwb, scan_key, trial_times):
-
     clip_table = TimeIntervals(
         name="Clip",
         description="Composed of 10 second clips from cinematic releases, Sports-1M dataset, or custom rendered first person POV videos in 3D environment in Unreal Engine.",
@@ -114,7 +110,6 @@ def add_trials_from_clip(nwb, scan_key, trial_times):
 
     for trial_data in all_trial_data:
         trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
-
         clip_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_time["start_frame_time"].values[0],
@@ -130,7 +125,6 @@ def add_trials_from_clip(nwb, scan_key, trial_times):
 
 
 def add_trials_from_monet2(nwb, scan_key, trial_times):
-
     monet2_table = TimeIntervals(
         name="Monet2",
         description="Generated from smoothened Gaussian noise and a global orientation and direction component.",
@@ -175,7 +169,6 @@ def add_trials_from_monet2(nwb, scan_key, trial_times):
 
     for trial_data in all_trial_data:
         trial_time = trial_times.loc[trial_times["trial_idx"] == trial_data["trial_idx"]]
-
         monet2_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_time["start_frame_time"].values[0],
