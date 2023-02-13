@@ -171,7 +171,6 @@ def _get_fluorescence(nwb, fluorescence_name):
 
 
 def add_roi_response_series(field_key, nwb, plane_segmentation, timestamps):
-
     traces_for_each_mask = (nda.Fluorescence() & field_key).fetch("trace", order_by="mask_id")
     continuous_traces = np.vstack(traces_for_each_mask).T
 

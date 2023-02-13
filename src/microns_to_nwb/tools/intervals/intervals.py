@@ -3,7 +3,6 @@ from pynwb.epoch import TimeIntervals
 
 
 def add_trials(scan_key, nwb, time_offset):
-
     # Add trials from "Trippy" stimulus type
     add_trials_from_trippy(nwb, scan_key=scan_key, time_offset=time_offset)
     # Add trials from "Clip" stimulus type
@@ -13,7 +12,6 @@ def add_trials(scan_key, nwb, time_offset):
 
 
 def add_trials_from_trippy(nwb, scan_key, time_offset):
-
     trippy_table = TimeIntervals(
         name="Trippy",
         description="The stimulus table for the cosine of a smoothened noise phase movie.",
@@ -60,7 +58,6 @@ def add_trials_from_trippy(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
-
         trippy_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_data["start_frame_time"] + time_offset,
@@ -83,7 +80,6 @@ def add_trials_from_trippy(nwb, scan_key, time_offset):
 
 
 def add_trials_from_clip(nwb, scan_key, time_offset):
-
     clip_table = TimeIntervals(
         name="Clip",
         description="Composed of 10 second clips from cinematic releases, Sports-1M dataset, or custom rendered first person POV videos in 3D environment in Unreal Engine.",
@@ -113,7 +109,6 @@ def add_trials_from_clip(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
-
         clip_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_data["start_frame_time"] + time_offset,
@@ -129,7 +124,6 @@ def add_trials_from_clip(nwb, scan_key, time_offset):
 
 
 def add_trials_from_monet2(nwb, scan_key, time_offset):
-
     monet2_table = TimeIntervals(
         name="Monet2",
         description="Generated from smoothened Gaussian noise and a global orientation and direction component.",
@@ -175,7 +169,6 @@ def add_trials_from_monet2(nwb, scan_key, time_offset):
     )
 
     for trial_data in all_trial_data:
-
         monet2_table.add_interval(
             id=trial_data["trial_idx"],
             start_time=trial_data["start_frame_time"] + time_offset,
