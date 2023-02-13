@@ -15,8 +15,14 @@ def check_module(nwb, name, description=None):
 def start_nwb(scan_key):
     nwb = NWBFile(
         identifier=str(uuid4()),
-        session_description="Contains calcium imaging recorded from multiple cortical visual areas "
-        "and behavioral measurements while a mouse viewed natural movies and parametric stimuli.",
+        session_description=(
+            "Contains calcium imaging recorded from multiple cortical visual areas "
+            "and behavioral measurements while a mouse viewed natural movies and parametric stimuli. "
+            "The structural ids are added as plane segmentation columns from the CAVE database on "
+            f"{datetime.utcnow().strftime('%Y-%m-%d')}. "
+            "To access the latest revision see the notebook that is linked to the dandiset. "
+            "The structural ids might not be present for all plane segmentations."
+        ),
         subject=Subject(subject_id="17797", species="Mus musculus", age="P75D/P81D", sex="M"),
         session_start_time=datetime(2018, 3, int(scan_key["session"])),
         session_id=f"{scan_key['session']}_{scan_key['scan_idx']}",
