@@ -136,7 +136,7 @@ def add_functional_coregistration_to_plane_segmentation(
     plane_segmentation.add_column(
         name="pt_root_id",
         description="The ID of the segment/root_id under the pt_position from the Proofread Segmentation (v343).",
-        data=pt_supervoxel_ids,
+        data=pt_root_ids,
     )
 
     plane_segmentation.add_column(
