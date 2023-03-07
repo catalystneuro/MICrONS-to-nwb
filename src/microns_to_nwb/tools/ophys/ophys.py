@@ -60,9 +60,9 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
 
     # Reshape masks
     masks = func.reshape_masks(mask_pixels, mask_weights, image_height, image_width)
-    # The masks dimensions are (width, height, number of frames), for NWB it should be
+    # The masks dimensions are (height, width, number of frames), for NWB it should be
     # transposed to (number of frames, width, height)
-    masks = masks.transpose(2, 0, 1)
+    masks = masks.transpose(2, 1, 0)
 
     # Add image masks
     plane_segmentation.add_column(
@@ -113,12 +113,12 @@ def add_functional_coregistration_to_plane_segmentation(
             cave_ids.append([np.nan])
 
         else:
-            pt_supervoxel_ids.extend(df["pt_supervoxel_id"].drop_duplicates().tolist())
-            pt_root_ids.extend(df["pt_root_id"].drop_duplicates().tolist())
-            pt_x_positions.extend(df["pt_position_x"].drop_duplicates().tolist())
-            pt_y_positions.extend(df["pt_position_y"].drop_duplicates().tolist())
-            pt_z_positions.extend(df["pt_position_z"].drop_duplicates().tolist())
-            cave_ids.append(df["id"].values.tolist())
+            pt_supervoxel_ids.extend(df["pt_supervoxel_id"].drop_duplicates().astype(np.float64).tolist())
+            pt_root_ids.extend(df["pt_root_id"].drop_duplicates().astype(np.float64).tolist())
+            pt_x_positions.extend(df["pt_position_x"].drop_duplicates().astype(np.float64).tolist())
+            pt_y_positions.extend(df["pt_position_y"].drop_duplicates().astype(np.float64).tolist())
+            pt_z_positions.extend(df["pt_position_z"].drop_duplicates().astype(np.float64).tolist())
+            cave_ids.append(df["id"].astype(np.float64).values.tolist())
 
     plane_segmentation.add_column(
         name="cave_ids",
@@ -136,7 +136,7 @@ def add_functional_coregistration_to_plane_segmentation(
     plane_segmentation.add_column(
         name="pt_root_id",
         description="The ID of the segment/root_id under the pt_position from the Proofread Segmentation (v343).",
-        data=pt_supervoxel_ids,
+        data=pt_root_ids,
     )
 
     plane_segmentation.add_column(
