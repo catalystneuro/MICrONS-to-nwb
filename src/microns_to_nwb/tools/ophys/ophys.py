@@ -60,9 +60,9 @@ def add_plane_segmentation(field_key, nwb, imaging_plane, image_segmentation):
 
     # Reshape masks
     masks = func.reshape_masks(mask_pixels, mask_weights, image_height, image_width)
-    # The masks dimensions are (width, height, number of frames), for NWB it should be
+    # The masks dimensions are (height, width, number of frames), for NWB it should be
     # transposed to (number of frames, width, height)
-    masks = masks.transpose(2, 0, 1)
+    masks = masks.transpose(2, 1, 0)
 
     # Add image masks
     plane_segmentation.add_column(
