@@ -1,0 +1,16 @@
+version: '3'
+services:
+  jupyterlab:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args: 
+        - CLOUDVOLUME_TOKEN=${CLOUDVOLUME_TOKEN}
+    volumes:
+      - ../notebooks:/src/notebooks
+    ports:
+      - "${JUPYTER_HOST:-0.0.0.0}:${JUPYTER_PORT_CONTAINER:-8888}:8888"
+    env_file:
+      - .env
+    container_name: microns-to-nwb-jupyterlab
+    entrypoint: /src/microns-to-nwb/deploy/entrypoint.sh
