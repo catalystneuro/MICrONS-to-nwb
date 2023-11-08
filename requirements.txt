@@ -1,5 +1,5 @@
-phase3@ git+https://github.com/cajal/microns_phase3_nda.git
-em-coregistration@ git+https://github.com/AllenInstitute/em_coregistration.git@phase3
+microns-phase3@ git+https://github.com/cajal/microns_phase3_nda.git@v8
+em_coregistration@ git+https://github.com/AllenInstitute/em_coregistration@phase3#egg=em_coregistration
 pynwb>=2.2.0
 nwbinspector>=0.4.25
-caveclient==4.17.1
+caveclient==5.7.0
